@@ -46,12 +46,12 @@ void bounce(SinglePixel* single, uint32_t deltaTime);
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
+	randomWalkFade,
 	bounce,
 	pulseTrainFade,
 	randomLevel,
 	pulseFade,
 	triangleFadeFade,
-	randomWalkFade,
 	rampFade,
 	triangleFade,
 	sineFade,
@@ -282,6 +282,9 @@ void randomLevel(SinglePixel* single, uint32_t deltaTime)
 void bounce(SinglePixel* single, uint32_t deltaTime)
 {
 	#define kBounceInitialMaxBrightness kMaxBrightness
+	#define kBounceBrightnessDecrement (16)
+	#define kBounceMinBrightness (96)
+	#define kBounceMinWidth 20
 	#define kBounceInitialWidth (period/4)
 	#define kBounceDecayNum (3)
 	#define kBounceDecayDen (4)
@@ -302,13 +305,17 @@ void bounce(SinglePixel* single, uint32_t deltaTime)
 	}
 	else if (deltaTime > gEndTime)
 	{
+		sBounceWidth =  (sBounceWidth * kBounceDecayNum) / kBounceDecayDen;
+		//sMaxBrightness = (sMaxBrightness * kBounceDecayNum) / kBounceDecayDen;
+		if (sMaxBrightness > kBounceMinBrightness + kBounceBrightnessDecrement)
+			sMaxBrightness -= kBounceBrightnessDecrement;
+
+
 		gStartTime = deltaTime;
 		gEndTime = gStartTime + sBounceWidth;
-		sBounceWidth =  (sBounceWidth * kBounceDecayNum) / kBounceDecayDen;
-		sMaxBrightness = (sMaxBrightness * kBounceDecayNum) / kBounceDecayDen;
 	}
 	
-	if (sBounceWidth < 100)
+	if (sBounceWidth < kBounceMinWidth)
 	{
 		brightness = 0;
 	}
@@ -318,6 +325,7 @@ void bounce(SinglePixel* single, uint32_t deltaTime)
 
 		brightness = (deltaTime * sMaxBrightness)/(sBounceWidth - 1);
 	}
+	
 	single->setBrightness(sine8t(brightness));
 }
 
