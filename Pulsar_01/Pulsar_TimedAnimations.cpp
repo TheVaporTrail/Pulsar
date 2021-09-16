@@ -14,7 +14,9 @@
 #define kMinBrightness 0
 
 /// ?? Parameters or constants?
-#define period  5000
+#define kAnimationPeriod 5000
+#define period  kAnimationPeriod
+
 #define deltaBrightness  (kMaxBrightness - kMinBrightness)
 #define period2  500
 
@@ -40,12 +42,18 @@ void randomWalkFade(SinglePixel* single, uint32_t deltaTime);
 void triangleFadeFade(SinglePixel* single, uint32_t deltaTime);
 void randomLevel(SinglePixel* single, uint32_t deltaTime);
 void bounce(SinglePixel* single, uint32_t deltaTime);
+void flicker(SinglePixel* single, uint32_t deltaTime);
+void breath(SinglePixel* single, uint32_t deltaTime);
+void heartbeat(SinglePixel* single, uint32_t deltaTime);
 
 
 //--------------------------------------------------------------------------------
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
+	breath,
+	heartbeat,
+	flicker,
 	randomWalkFade,
 	bounce,
 	pulseTrainFade,
@@ -329,4 +337,101 @@ void bounce(SinglePixel* single, uint32_t deltaTime)
 	single->setBrightness(sine8t(brightness));
 }
 
+//--------------------------------------------------------------------------------
+//	Animation: Flicker
+//--------------------------------------------------------------------------------
+void flicker(SinglePixel* single, uint32_t deltaTime)
+{
+	uint32_t ms = (deltaTime % period);
+
+	uint32_t brightness = 0;
+
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Breath
+//
+//	https://www.e-breathing.com/normal-respiratory-rate-volume-chart/
+//--------------------------------------------------------------------------------
+void breath(SinglePixel* single, uint32_t deltaTime)
+{
+	#define kBreathPeriod (kAnimationPeriod/2)
+	#define kBreathOffset (kAnimationPeriod/4)
+
+	uint32_t ms = (deltaTime % kAnimationPeriod);
+	uint32_t brightness; 
+
+	if (ms < kBreathOffset)
+	{
+		brightness = 0;
+	}
+	else
+	{
+		ms -= kBreathOffset;
+
+		if (ms > kBreathPeriod)
+			brightness = 0;
+		else if (ms < kBreathPeriod/2)
+			brightness= (ms * deltaBrightness)/(kBreathPeriod/2 - 1) + kMinBrightness;
+		else
+			brightness= ((kBreathPeriod-1-ms) * deltaBrightness)/(kBreathPeriod/2 - 1) + kMinBrightness;
+	}
+
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Calc Triangle Wave
+//--------------------------------------------------------------------------------
+uint16_t CalcTriangleWave(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
+{
+	uint16_t tri;
+
+	ms = (ms % width);
+	width = (width >> 1);
+	hi = hi - lo;
+
+	if (ms < width)
+		tri = (ms * hi)/(width - 1);
+	else
+		tri = (((width<<1)-1-ms) * hi)/(width - 1);
+
+	tri += lo;
+
+	return tri;
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Heartbeat
+//--------------------------------------------------------------------------------
+void heartbeat(SinglePixel* single, uint32_t deltaTime)
+{
+	#define kHeartbeatPeriod 1000
+	#define kHeartbeatOffset 250
+	#define kHeartbeatWidth 200
+	#define kHeartbeatBrightnessA (kMaxBrightness - 50)
+	#define kHeartbeatBrightnessB (kMaxBrightness - 150)
+
+	uint16_t ms = (deltaTime % kHeartbeatPeriod);
+	uint16_t brightness = 0;
+
+	if (ms < kHeartbeatOffset)
+	{
+		brightness = 0;
+	}
+	else
+	{
+		ms -= kHeartbeatOffset;
+
+		if (ms < kHeartbeatWidth)
+			brightness = CalcTriangleWave(ms, kHeartbeatWidth, kMinBrightness, kHeartbeatBrightnessA);
+		else if (ms < 2*kHeartbeatWidth)
+			brightness = CalcTriangleWave(ms, kHeartbeatWidth, kMinBrightness, kHeartbeatBrightnessB);
+		else
+			brightness = 0;
+	}
+
+	single->setBrightness(brightness);
+}
 
