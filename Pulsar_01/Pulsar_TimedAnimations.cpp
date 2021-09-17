@@ -38,6 +38,7 @@ void triangleBlinkFade(SinglePixel* single, uint32_t deltaTime);
 void rampFade(SinglePixel* single, uint32_t deltaTime);
 void pulseFade(SinglePixel* single, uint32_t deltaTime);
 void pulseTrainFade(SinglePixel* single, uint32_t deltaTime);
+void randomLevelFade(SinglePixel* single, uint32_t deltaTime);
 void randomWalkFade(SinglePixel* single, uint32_t deltaTime);
 void triangleFadeFade(SinglePixel* single, uint32_t deltaTime);
 void randomLevel(SinglePixel* single, uint32_t deltaTime);
@@ -51,16 +52,17 @@ void heartbeat(SinglePixel* single, uint32_t deltaTime);
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
+	flicker,
 	breath,
 	heartbeat,
-	flicker,
-	randomWalkFade,
+	randomLevelFade,
 	bounce,
 	pulseTrainFade,
 	randomLevel,
 	pulseFade,
 	triangleFadeFade,
 	rampFade,
+	randomWalkFade,
 	triangleFade,
 	sineFade,
 	triangleBlinkFade,
@@ -73,6 +75,51 @@ static animationFunc_t sAnimationFunctions[] = {
 animationFunc_t* getTimedAnimationList(void)
 {
 	return sAnimationFunctions;
+}
+
+//--------------------------------------------------------------------------------
+//	Calc Triangle Wave
+//--------------------------------------------------------------------------------
+uint16_t CalcTriangleWave(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
+{
+	uint16_t tri;
+
+	ms = (ms % width);
+	width = (width >> 1);
+	hi = hi - lo;
+
+	if (ms < width)
+		tri = (ms * hi)/(width - 1);
+	else
+		tri = (((width<<1)-1-ms) * hi)/(width - 1);
+
+	tri += lo;
+
+	return tri;
+}
+
+//--------------------------------------------------------------------------------
+//	Calc Ramp
+//--------------------------------------------------------------------------------
+uint16_t CalcRamp(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
+{
+	uint16_t r;
+
+	ms = (ms % width);
+
+	if (lo < hi)
+	{
+		hi -= lo;
+		r = (ms * hi)/(width - 1) + lo;
+	}
+	else
+	{
+		lo -= hi;
+		ms = width - ms;
+		r = (ms * lo)/(width - 1) + hi;
+	}
+
+	return r;
 }
 
 //--------------------------------------------------------------------------------
@@ -205,11 +252,11 @@ void pulseTrainFade(SinglePixel* single, uint32_t deltaTime)
 	uint32_t brightness;
 	
 	static uint16_t sPulseTrain = 0;
-	
+
 	// Init: Random number to represent eight random pulses
 	if (deltaTime == 0)
 		sPulseTrain = random(255);
-	
+
 	// If the bit is not set, then no pulse
 	if ( (sPulseTrain & (1 << i)) )
 		brightness = 0;
@@ -219,7 +266,30 @@ void pulseTrainFade(SinglePixel* single, uint32_t deltaTime)
 	// And ramp down for the second half.
 	else
 		brightness= ((period2-1-m2) * deltaBrightness)/(period2/2 - 1) + kMinBrightness;
-		
+
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Random Level Fade
+//--------------------------------------------------------------------------------
+void randomLevelFade(SinglePixel* single, uint32_t deltaTime)
+{
+	static uint8_t startLevel = 0;
+	static uint8_t endLevel = 0;
+
+	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
+	{
+		gEndTime = deltaTime + random(750, 2000);
+		gStartTime = deltaTime;
+		startLevel = endLevel;
+		endLevel = random(kMinBrightness, kMaxBrightness);
+	}
+
+	uint32_t ms = (deltaTime - gStartTime);
+	uint32_t deltaT = gEndTime - gStartTime;
+	uint32_t brightness = CalcRamp(ms, deltaT, startLevel, endLevel);
+
 	single->setBrightness(brightness);
 }
 
@@ -228,34 +298,51 @@ void pulseTrainFade(SinglePixel* single, uint32_t deltaTime)
 //--------------------------------------------------------------------------------
 void randomWalkFade(SinglePixel* single, uint32_t deltaTime)
 {
+	#define kRandomWalkPeriod 250
+	#define kRandomWalkRandomness 31 /* -4 to +4 */
+	#define kRandomWalkStep 12
+
 	static uint8_t startLevel = 0;
 	static uint8_t endLevel = 0;
-	
+
 	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
 	{
-		gEndTime = deltaTime + random(750, 2000);
+		gEndTime = deltaTime + kRandomWalkPeriod;
 		gStartTime = deltaTime;
 		startLevel = endLevel;
-		endLevel = random(8, 255);
+
+// 		int8_t d = random(kRandomWalkRandomness);
+//
+// 		if (endLevel < kMinBrightness + kRandomWalkRandomness)
+// 			endLevel += d;
+// 		else if (endLevel > kMaxBrightness - kRandomWalkRandomness)
+// 			endLevel -= d;
+// 		else
+// 			endLevel += d - kRandomWalkRandomness/2;
+
+// 		int8_t d = random(3) - 1;
+//
+// 		if (d < 0 && endLevel >= kMinBrightness + kRandomWalkStep)
+// 			endLevel -= kRandomWalkStep;
+// 		else if (d > 0 &&endLevel > kMaxBrightness - kRandomWalkStep )
+// 			endLevel += kRandomWalkStep;
+
+		int8_t d = random(2);
+
+		// Decrement 
+		if (endLevel >= kMaxBrightness - kRandomWalkStep)
+			endLevel -= kRandomWalkStep;
+		else if (endLevel <= kMinBrightness + kRandomWalkStep)
+			endLevel += kRandomWalkStep;
+		else if (d == 0)
+			endLevel -= kRandomWalkStep;
+		else
+			endLevel += kRandomWalkStep;
 	}
-	
+
 	uint32_t ms = (deltaTime - gStartTime);
-	
-	uint32_t brightness; 
-	uint32_t deltaT = gEndTime - gStartTime;
-	
-	if (startLevel < endLevel)
-	{
-		uint32_t deltaL = endLevel - startLevel;
-		brightness = (ms * deltaL)/(deltaT - 1) + startLevel;
-	}
-	else
-	{
-		uint32_t deltaL = startLevel - endLevel;
-		ms = deltaT - ms;
-		brightness = (ms * deltaL)/(deltaT - 1) + endLevel;
-	}
-	
+	uint32_t brightness = CalcRamp(ms, kRandomWalkPeriod, startLevel, endLevel);
+
 	single->setBrightness(brightness);
 }
 
@@ -342,9 +429,26 @@ void bounce(SinglePixel* single, uint32_t deltaTime)
 //--------------------------------------------------------------------------------
 void flicker(SinglePixel* single, uint32_t deltaTime)
 {
-	uint32_t ms = (deltaTime % period);
+	#define kFlickerMinPeriod 50
+	#define kFlickerMaxPeriod 150
+	//#define kFlickerBaseBrightness (kMinBrightness/2 + kMaxBrightness/2)
 
-	uint32_t brightness = 0;
+	static uint8_t startLevel = 0;
+	static uint8_t endLevel = 0;
+
+	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
+	{
+		gEndTime = deltaTime + random(kFlickerMinPeriod, kFlickerMaxPeriod);
+		gStartTime = deltaTime;
+		startLevel = endLevel;
+		endLevel = random(8, 255);
+	}
+
+	uint32_t ms = (deltaTime - gStartTime);
+	uint32_t brightness; 
+	uint32_t deltaT = gEndTime - gStartTime;
+
+	brightness = CalcRamp(ms, deltaT, startLevel, endLevel);
 
 	single->setBrightness(brightness);
 }
@@ -381,26 +485,6 @@ void breath(SinglePixel* single, uint32_t deltaTime)
 	single->setBrightness(brightness);
 }
 
-//--------------------------------------------------------------------------------
-//	Calc Triangle Wave
-//--------------------------------------------------------------------------------
-uint16_t CalcTriangleWave(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
-{
-	uint16_t tri;
-
-	ms = (ms % width);
-	width = (width >> 1);
-	hi = hi - lo;
-
-	if (ms < width)
-		tri = (ms * hi)/(width - 1);
-	else
-		tri = (((width<<1)-1-ms) * hi)/(width - 1);
-
-	tri += lo;
-
-	return tri;
-}
 
 //--------------------------------------------------------------------------------
 //	Animation: Heartbeat
