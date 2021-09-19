@@ -43,7 +43,7 @@ void randomWalkFade(SinglePixel* single, uint32_t deltaTime);
 void triangleFadeFade(SinglePixel* single, uint32_t deltaTime);
 void randomLevel(SinglePixel* single, uint32_t deltaTime);
 void bounce(SinglePixel* single, uint32_t deltaTime);
-void flicker(SinglePixel* single, uint32_t deltaTime);
+void candleFlicker(SinglePixel* single, uint32_t deltaTime);
 void breath(SinglePixel* single, uint32_t deltaTime);
 void heartbeat(SinglePixel* single, uint32_t deltaTime);
 
@@ -52,7 +52,7 @@ void heartbeat(SinglePixel* single, uint32_t deltaTime);
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
-	flicker,
+	candleFlicker,
 	breath,
 	heartbeat,
 	randomLevelFade,
@@ -425,30 +425,57 @@ void bounce(SinglePixel* single, uint32_t deltaTime)
 }
 
 //--------------------------------------------------------------------------------
-//	Animation: Flicker
+//	Animation: Candle Flicker
 //--------------------------------------------------------------------------------
-void flicker(SinglePixel* single, uint32_t deltaTime)
+void candleFlicker(SinglePixel* single, uint32_t deltaTime)
 {
 	#define kFlickerMinPeriod 50
 	#define kFlickerMaxPeriod 150
-	//#define kFlickerBaseBrightness (kMinBrightness/2 + kMaxBrightness/2)
+	#define kFlickerPeriods   5
+	#define kFlickerLowBrightnessMin		(kMinBrightness + 50)
+	#define kFlickerLowBrightnessMax		(kMinBrightness + 80)
+	#define kFlickerMidBrightnessMin 		(kMinBrightness/2 + kMaxBrightness/2 - 20)
+	#define kFlickerMidBrightnessMax 		(kMinBrightness/2 + kMaxBrightness/2 + 20)
+	#define kFlickerHighBrightnessMin		(kMaxBrightness - 50)
+	#define kFlickerHighBrightnessMax		(kMaxBrightness)
 
 	static uint8_t startLevel = 0;
 	static uint8_t endLevel = 0;
+	static uint8_t levelCount = kFlickerPeriods;
+	static uint8_t candleBrightRange = 1; // mid
 
 	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
 	{
+		if (levelCount == 0)
+		{
+			uint8_t r = random(20);
+			if (r < 1)
+				candleBrightRange = 0; // low
+			else if (r < 2)
+				candleBrightRange = 2; // high
+			else
+				candleBrightRange = 1; // high
+
+			levelCount = kFlickerPeriods;
+		}
+
 		gEndTime = deltaTime + random(kFlickerMinPeriod, kFlickerMaxPeriod);
 		gStartTime = deltaTime;
 		startLevel = endLevel;
-		endLevel = random(8, 255);
+		levelCount -= 1;
+
+		// Select a new level based on the "brightness range"
+		if (candleBrightRange == 0)
+			endLevel = random(kFlickerLowBrightnessMin, kFlickerLowBrightnessMax);
+		else if (candleBrightRange == 1)
+			endLevel = random(kFlickerMidBrightnessMin, kFlickerMidBrightnessMax);
+		else
+			endLevel = random(kFlickerHighBrightnessMin, kFlickerHighBrightnessMax);
 	}
 
-	uint32_t ms = (deltaTime - gStartTime);
-	uint32_t brightness; 
+	uint32_t ms = deltaTime - gStartTime;
 	uint32_t deltaT = gEndTime - gStartTime;
-
-	brightness = CalcRamp(ms, deltaT, startLevel, endLevel);
+	uint32_t brightness = CalcRamp(ms, deltaT, startLevel, endLevel);
 
 	single->setBrightness(brightness);
 }
