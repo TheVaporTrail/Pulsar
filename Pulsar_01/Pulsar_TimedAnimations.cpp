@@ -32,6 +32,7 @@ static uint32_t gEndTime = 0;
 //--------------------------------------------------------------------------------
 //	Animation Prototypes
 //--------------------------------------------------------------------------------
+void pixelOff(SinglePixel* single, uint32_t deltaTime);
 void triangleFade(SinglePixel* single, uint32_t deltaTime);
 void sineFade(SinglePixel* single, uint32_t deltaTime);
 void triangleBlinkFade(SinglePixel* single, uint32_t deltaTime);
@@ -46,12 +47,15 @@ void bounce(SinglePixel* single, uint32_t deltaTime);
 void candleFlicker(SinglePixel* single, uint32_t deltaTime);
 void breath(SinglePixel* single, uint32_t deltaTime);
 void heartbeat(SinglePixel* single, uint32_t deltaTime);
+void oceanWave(SinglePixel* single, uint32_t time);
 
 
 //--------------------------------------------------------------------------------
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
+	oceanWave,
+// 	pixelOff,
 	candleFlicker,
 	breath,
 	heartbeat,
@@ -80,7 +84,7 @@ animationFunc_t* getTimedAnimationList(void)
 //--------------------------------------------------------------------------------
 //	Calc Triangle Wave
 //--------------------------------------------------------------------------------
-uint16_t CalcTriangleWave(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
+uint32_t CalcTriangleWave(uint32_t ms, uint32_t width, uint32_t lo, uint32_t hi)
 {
 	uint16_t tri;
 
@@ -101,26 +105,35 @@ uint16_t CalcTriangleWave(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
 //--------------------------------------------------------------------------------
 //	Calc Ramp
 //--------------------------------------------------------------------------------
-uint16_t CalcRamp(uint16_t ms, uint16_t width, uint16_t lo, uint16_t hi)
+uint32_t CalcRamp(uint32_t ms, uint32_t width, uint32_t startLevel, uint32_t endLevel)
 {
 	uint16_t r;
 
 	ms = (ms % width);
 
-	if (lo < hi)
+	if (startLevel < endLevel)
 	{
-		hi -= lo;
-		r = (ms * hi)/(width - 1) + lo;
+		endLevel -= startLevel;
+		r = (ms * endLevel)/(width - 1) + startLevel;
 	}
 	else
 	{
-		lo -= hi;
+		startLevel -= endLevel;
 		ms = width - ms;
-		r = (ms * lo)/(width - 1) + hi;
+		r = (ms * startLevel)/(width - 1) + endLevel;
 	}
 
 	return r;
 }
+
+//--------------------------------------------------------------------------------
+//	Animation: Triangle Fade
+//--------------------------------------------------------------------------------
+void pixelOff(SinglePixel* single, uint32_t deltaTime)
+{
+	single->setBrightness(0);
+}
+
 
 //--------------------------------------------------------------------------------
 //	Animation: Triangle Fade
@@ -546,3 +559,37 @@ void heartbeat(SinglePixel* single, uint32_t deltaTime)
 	single->setBrightness(brightness);
 }
 
+//--------------------------------------------------------------------------------
+//	Animation: Ocean Wave
+//--------------------------------------------------------------------------------
+void oceanWave(SinglePixel* single, uint32_t time)
+{
+	#define kOceanWaveMinPeriod		1500
+	#define kOceanWaveMaxPeriod		3500
+	#define kOceanWaveMinPeriodBrightness	125
+	#define kOceanWaveMaxPeriodBrightness	(kMaxBrightness - 50)
+	#define kOceanWaveMinBrightness	20
+
+	static uint16_t sWavePeriod = kOceanWaveMinPeriod;
+	static uint8_t sMaxBrightness = kMaxBrightness;
+	uint32_t brightness;
+
+	// Init: Reset max brightness and bounce width
+	if (time == 0 || time > gEndTime)
+	{
+		sWavePeriod = random(kOceanWaveMinPeriod, kOceanWaveMaxPeriod);
+
+		uint32_t a = sWavePeriod - kOceanWaveMinPeriod;
+		sMaxBrightness = kOceanWaveMinPeriodBrightness +
+					((kOceanWaveMaxPeriodBrightness - kOceanWaveMinPeriodBrightness) * a) /
+					(kOceanWaveMaxPeriod - kOceanWaveMinPeriod);
+
+		gStartTime = time;
+		gEndTime = gStartTime + sWavePeriod;
+	}
+
+	time -= gStartTime;
+
+	brightness = CalcTriangleWave(time, sWavePeriod, kOceanWaveMinBrightness, sMaxBrightness);
+	single->setBrightness((brightness));
+}
