@@ -19,6 +19,7 @@
 
 #define deltaBrightness  (kMaxBrightness - kMinBrightness)
 #define period2  500
+#define period3  1000
 
 //--------------------------------------------------------------------------------
 //	Static globals
@@ -48,12 +49,14 @@ void candleFlicker(SinglePixel* single, uint32_t deltaTime);
 void breath(SinglePixel* single, uint32_t deltaTime);
 void heartbeat(SinglePixel* single, uint32_t deltaTime);
 void oceanWave(SinglePixel* single, uint32_t time);
+void sineFadeModulated(SinglePixel* single, uint32_t time);
 
 
 //--------------------------------------------------------------------------------
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
+	sineFadeModulated,
 	oceanWave,
 // 	pixelOff,
 	candleFlicker,
@@ -175,6 +178,32 @@ void sineFade(SinglePixel* single, uint32_t deltaTime)
 	
 	uint32_t brightness = (ms * deltaBrightness)/(period - 1) + kMinBrightness;
 	
+	single->setBrightness(sine8t(brightness));
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Sine Fade
+//--------------------------------------------------------------------------------
+void sineFadeModulated(SinglePixel* single, uint32_t time)
+{
+	#define kFadeModulatedBaseline	128
+	#define kFadeModulatedRangeA	 120
+	//#define kFadeModulatedRangeB	 20
+
+	uint32_t ms = (time % period);
+
+	// Calc modulation. Range is 0 to 255
+	#define kFadeModulationMin 0
+	uint32_t modulation = (ms * (255-kFadeModulationMin))/(period - 1) + kFadeModulationMin;
+	//modulation = sine8t(modulation);
+
+	uint32_t m2 = (ms % period2);
+	uint32_t b = (m2 * 255)/(period2 - 1);
+	b = (sine8t(b)*kFadeModulatedRangeA)/(255);
+	//b = (b * modulation)/255;
+
+	uint32_t brightness = kFadeModulatedBaseline /*- kFadeModulatedRangeA/2*/ + b;
+
 	single->setBrightness(sine8t(brightness));
 }
 
