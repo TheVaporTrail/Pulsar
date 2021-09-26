@@ -8,7 +8,7 @@ It is inspired by two different sets of LEDs. The most recent is a string of blu
 
 ## Goals
 * Time-based animations: The animation speed should not depend on how often the animation routines are called. Instead, the animations will use the current time (milliseconds) to determine the brightness.
-* Light hardware abstraction: The animations routines should not talk to the hardware directly. Instead, a "SinglePixel" class, with a "setBrightness" function, will be provided to the animation. Subclasses of the SinglePixel class will handle updating hardware. 
+* Light hardware abstraction: The animations routines should not talk to the hardware directly. Instead, a `SinglePixel` class, with a `setBrightness` function, will be provided to the animation. Subclasses of the SinglePixel class will handle updating hardware. 
 
 ## Architecture
 
@@ -23,10 +23,10 @@ Runs each animation for about 30 seconds and advances to the next. Uses an analo
 
 
 ## Next Steps
-* Add setHue; called from run loop to advance through colors, either with each animation change or continually
-* Add setBrightnessAndHue
-* Add setColor
-* Map brightness to hue
-* Use brightness to select between two colors.
-* Map brightness to distance along addressable pixel strip
-* Demonstrate different animations running independently on different pins
+- [ ] Add setHue; called from run loop to advance through colors, either with each animation change or continually
+- [ ] Add setBrightnessAndHue
+- [ ] Add setColor (24 bit RGB color)
+- [ ] Map brightness to hue
+- [ ] Use brightness to select between two colors.
+- [ ] Map brightness to distance along addressable pixel strip
+- [ ] Demonstrate different animations running independently on different pins
