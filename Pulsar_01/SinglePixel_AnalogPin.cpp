@@ -1,3 +1,10 @@
+//--------------------------------------------------------------------------------
+//	Single Pixel: Analog Pin
+//
+//	Subclass
+//
+//	2021.08.31: Created
+//--------------------------------------------------------------------------------
 #include "SinglePixel_AnalogPin.h"
 
 SinglePixel_AnalogPin::SinglePixel_AnalogPin(uint8_t pin) : SinglePixel()

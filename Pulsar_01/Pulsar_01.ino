@@ -5,17 +5,26 @@
 //
 //	2021.08.31: Created
 //--------------------------------------------------------------------------------
-#include "SinglePixel_AnalogPin.h"
-#include "Pulsar_TimedAnimations.h"
+#include "Pulsar_Animations.h"
 
 //--------------------------------------------------------------------------------
-//	Hardware Configuration
+//	Hardware Selection
 //--------------------------------------------------------------------------------
-#define HW_USE_ANALOG_OUTPUT 1
-#define HW_ANALOG_LED_PIN 11
+//#define HW_USE_ANALOG_OUTPUT 1
+#define HW_USE_NEOPIXEL 1
 
-//#define HW_USE_NEOPIXEL 0
-//#define HW_NEOPIXEL_PIN 9
+//--------------------------------------------------------------------------------
+//	Hardware Header file and configure
+//--------------------------------------------------------------------------------
+#ifdef HW_USE_ANALOG_OUTPUT
+	#include "SinglePixel_AnalogPin.h"
+	#define HW_ANALOG_LED_PIN 11
+#endif
+
+#ifdef HW_USE_NEOPIXEL
+	#include "SinglePixel_SingleNeopixel.h"
+	#define HW_NEOPIXEL_PIN 6
+#endif
 
 //--------------------------------------------------------------------------------
 //	System Globals
@@ -47,8 +56,9 @@ animationFunc_t gCurrentAnimation = NULL;
 //--------------------------------------------------------------------------------
 //	Prototypes
 //--------------------------------------------------------------------------------
-void test(void);
-void run(void);
+void initAnimationList(void);
+void nextAnimation(void);
+void runAnimation(void);
 
 //--------------------------------------------------------------------------------
 //	Setup
@@ -57,15 +67,16 @@ void setup()
 {
 	gStartTime = millis();
 	
-	gAnimations = getTimedAnimationList();
-	gAnimationIdx = 0;
-	gCurrentAnimation = gAnimations[gAnimationIdx];
+	initAnimationList();
 	
-	#if HW_USE_ANALOG_OUTPUT
+	#ifdef HW_USE_ANALOG_OUTPUT
 	single = new SinglePixel_AnalogPin(HW_ANALOG_LED_PIN);
 	#endif
-	
-	//Serial.begin(115200);
+
+	#ifdef HW_USE_NEOPIXEL
+	single = new SinglePixel_SingleNeopixel(HW_NEOPIXEL_PIN);
+	single->setColor(0x00ffff);
+	#endif
 }
 
 //--------------------------------------------------------------------------------
@@ -73,26 +84,21 @@ void setup()
 //--------------------------------------------------------------------------------
 void loop()
 {
-	run();
-	//test();
+	runAnimation();
 }
 
 //--------------------------------------------------------------------------------
-//	Test
+//	Init Animation List
 //--------------------------------------------------------------------------------
-void test(void)
+void initAnimationList(void)
 {
-	#if HW_USE_ANALOG_OUTPUT
-	pinMode(HW_ANALOG_LED_PIN, OUTPUT);
-	digitalWrite(HW_ANALOG_LED_PIN, 1);
-	delay(500);
-	digitalWrite(HW_ANALOG_LED_PIN, 0);
-	delay(500);
-	#endif
+	gAnimations = getTimedAnimationList();
+	gAnimationIdx = 0;
+	gCurrentAnimation = gAnimations[gAnimationIdx];
 }
 
 //--------------------------------------------------------------------------------
-//	next Animation
+//	Next Animation
 //--------------------------------------------------------------------------------
 void nextAnimation(void)
 {
@@ -106,7 +112,7 @@ void nextAnimation(void)
 //--------------------------------------------------------------------------------
 //	Run
 //--------------------------------------------------------------------------------
-void run(void)
+void runAnimation(void)
 {
 	uint32_t now = millis();
 	uint32_t deltaTime = now - gStartTime;
@@ -122,5 +128,4 @@ void run(void)
 	
 	delay(kDelayInterval);
 }
-
 

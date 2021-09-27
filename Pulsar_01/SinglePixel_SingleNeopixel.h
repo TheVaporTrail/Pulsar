@@ -1,25 +1,30 @@
 //--------------------------------------------------------------------------------
-//	Single Pixel: Analog Pin
+//	Single Pixel: Single Neopixel
 //
 //	Subclass
 //
-//	2021.08.31: Created
+//	2021.09.27: Created
 //--------------------------------------------------------------------------------
 #include "SinglePixel.h"
+#include <Adafruit_NeoPixel.h>
 
-class SinglePixel_AnalogPin : public SinglePixel {
+class SinglePixel_SingleNeopixel : public SinglePixel {
 
 	public:
-
 		// Constructor
-		SinglePixel_AnalogPin(uint8_t pin);
+		SinglePixel_SingleNeopixel(uint8_t pin);
 		
 		// Destructor
-	   ~SinglePixel_AnalogPin(void);
+	   ~SinglePixel_SingleNeopixel(void);
 	   
+		// 
+		void setBrightness(uint16_t brightness);
+		
 	private:
-		uint8_t	pin;
+		Adafruit_NeoPixel* neopixel;
 
 		void setBrightnessValue(uint16_t brightness);
+		
+		
 	
 };
