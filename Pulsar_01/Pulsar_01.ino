@@ -10,8 +10,9 @@
 //--------------------------------------------------------------------------------
 //	Hardware Selection
 //--------------------------------------------------------------------------------
-//#define HW_USE_ANALOG_OUTPUT 1
-#define HW_USE_NEOPIXEL 1
+// Uncomment the line according to how the light source is connected to the Arduino
+#define HW_USE_ANALOG_OUTPUT 1
+//#define HW_USE_NEOPIXEL 1
 
 //--------------------------------------------------------------------------------
 //	Hardware Header file and configure
@@ -34,7 +35,8 @@ SinglePixel* single = NULL;
 //--------------------------------------------------------------------------------
 //	Animation Settings
 //--------------------------------------------------------------------------------
-// Millisecond delay between calls to animations
+// Millisecond delay between calls to animations. Changing this value does not
+// change the animation speed.
 #define kDelayInterval 30
 
 // Time, in seconds, to run each animation
@@ -43,7 +45,7 @@ SinglePixel* single = NULL;
 //--------------------------------------------------------------------------------
 //	Animation Globals
 //--------------------------------------------------------------------------------
-// Time, in ms, that the current animation started
+// Time, in ms, when the current animation started
 uint32_t gStartTime;
 
 // Animation function list
@@ -52,6 +54,8 @@ animationFunc_t* gAnimations = NULL;
 uint16_t gAnimationIdx = 0;
 // Current animation function
 animationFunc_t gCurrentAnimation = NULL;
+
+animationContext_t gAnimationContext;
 
 //--------------------------------------------------------------------------------
 //	Prototypes
@@ -75,6 +79,7 @@ void setup()
 
 	#ifdef HW_USE_NEOPIXEL
 	single = new SinglePixel_SingleNeopixel(HW_NEOPIXEL_PIN);
+	// Set the color that will be used for all the animations
 	single->setColor(0x00ffff);
 	#endif
 }
@@ -92,9 +97,11 @@ void loop()
 //--------------------------------------------------------------------------------
 void initAnimationList(void)
 {
-	gAnimations = getTimedAnimationList();
+	gAnimations = getAnimationList();
 	gAnimationIdx = 0;
 	gCurrentAnimation = gAnimations[gAnimationIdx];
+	
+	memset(&gAnimationContext, 0, sizeof(gAnimationContext));
 }
 
 //--------------------------------------------------------------------------------
@@ -124,7 +131,7 @@ void runAnimation(void)
 		nextAnimation();
 	}
 
-	gCurrentAnimation(single, deltaTime);
+	gCurrentAnimation(single, deltaTime, &gAnimationContext);
 	
 	delay(kDelayInterval);
 }

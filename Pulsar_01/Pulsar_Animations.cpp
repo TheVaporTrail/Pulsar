@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------
-//	Pulsar: Timed Animations
+//	Pulsar: Animations
 //
 //
 //	2021.08.31: Created
@@ -13,114 +13,293 @@
 //--------------------------------------------------------------------------------
 #define kMaxBrightness 255
 #define kMinBrightness 0
+#define kDeltaBrightness  (kMaxBrightness - kMinBrightness)
 
-/// ?? Parameters or constants?
-#define kAnimationPeriod 5000
-#define period  kAnimationPeriod
+#define kAnimationPeriod	5000
+#define kAnimationPeriod2 	500
 
-#define deltaBrightness  (kMaxBrightness - kMinBrightness)
-#define period2  500
-#define period3  1000
-
-//--------------------------------------------------------------------------------
-//	Static globals
-//
-//	These variables are here instead of having static variables in each
-//	animation routine
-//--------------------------------------------------------------------------------
-static uint32_t gStartTime = 0;
-static uint32_t gEndTime = 0;
 
 //--------------------------------------------------------------------------------
 //	Animation Prototypes
 //--------------------------------------------------------------------------------
-void pixelOff(SinglePixel* single, uint32_t deltaTime);
-void triangleFade(SinglePixel* single, uint32_t deltaTime);
-void sineFade(SinglePixel* single, uint32_t deltaTime);
-void triangleBlinkFade(SinglePixel* single, uint32_t deltaTime);
-void rampFade(SinglePixel* single, uint32_t deltaTime);
-void pulseFade(SinglePixel* single, uint32_t deltaTime);
-void pulseTrainFade(SinglePixel* single, uint32_t deltaTime);
-void randomLevelFade(SinglePixel* single, uint32_t deltaTime);
-void randomWalkFade(SinglePixel* single, uint32_t deltaTime);
-void triangleFadeFade(SinglePixel* single, uint32_t deltaTime);
-void randomLevel(SinglePixel* single, uint32_t deltaTime);
-void bounce(SinglePixel* single, uint32_t deltaTime);
-void candleFlicker(SinglePixel* single, uint32_t deltaTime);
-void breath(SinglePixel* single, uint32_t deltaTime);
-void heartbeat(SinglePixel* single, uint32_t deltaTime);
-void oceanWave(SinglePixel* single, uint32_t time);
-void sineFadeModulated(SinglePixel* single, uint32_t time);
+void anim_PixelOff(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_SawtoothWave(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_TriangleWave(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_SineWave(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_TrianglePulse(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_TriangleWaveBlink(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_PulseTrain(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_RandomLevel(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_RandomLevelFade(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_RandomWalkFade(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_SummedTriangleWaves(SinglePixel* single, uint32_t time, animationContext_t* context);
+
+void anim_Breath(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_Heartbeat(SinglePixel* single, uint32_t time, animationContext_t* context);
+
+void anim_Bounce(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_CandleFlicker(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_OceanWave(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_ModulatedSineWave(SinglePixel* single, uint32_t time, animationContext_t* context);
 
 
 //--------------------------------------------------------------------------------
 //	Animation Function List
 //--------------------------------------------------------------------------------
 static animationFunc_t sAnimationFunctions[] = {
-	sineFadeModulated,
-	oceanWave,
-// 	pixelOff,
-	candleFlicker,
-	breath,
-	heartbeat,
-	randomLevelFade,
-	bounce,
-	pulseTrainFade,
-	randomLevel,
-	pulseFade,
-	triangleFadeFade,
-	rampFade,
-	randomWalkFade,
-	triangleFade,
-	sineFade,
-	triangleBlinkFade,
+	anim_ModulatedSineWave,
+	anim_OceanWave,
+	anim_CandleFlicker,
+	anim_Breath,
+	anim_Heartbeat,
+	anim_RandomLevelFade,
+	anim_Bounce,
+	anim_PulseTrain,
+	anim_RandomLevel,
+	anim_TrianglePulse,
+	anim_SummedTriangleWaves,
+	anim_SawtoothWave,
+	anim_RandomWalkFade,
+	anim_TriangleWave,
+	anim_SineWave,
+	anim_TriangleWaveBlink,
 	NULL
 };
 
 //--------------------------------------------------------------------------------
-//	Get Timed Animation List
+//	Get Animation List
 //--------------------------------------------------------------------------------
-animationFunc_t* getTimedAnimationList(void)
+animationFunc_t* getAnimationList(void)
 {
 	return sAnimationFunctions;
 }
 
 //--------------------------------------------------------------------------------
-//	Animation: Triangle Fade
+//	Animation: Pixel Off
 //--------------------------------------------------------------------------------
-void pixelOff(SinglePixel* single, uint32_t deltaTime)
+void anim_PixelOff(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	single->setBrightness(0);
 }
 
-
 //--------------------------------------------------------------------------------
-//	Animation: Triangle Fade
+//	Animation: Triangle Wave
 //--------------------------------------------------------------------------------
-void triangleFade(SinglePixel* single, uint32_t deltaTime)
+void anim_TriangleWave(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
-	uint32_t ms = (deltaTime % period);
-	
 	uint32_t brightness; 
 	
-	if (ms < period/2)
-		brightness= (ms * deltaBrightness)/(period/2 - 1) + kMinBrightness;
+	brightness = CalcTriangleWave(time, kAnimationPeriod, kMinBrightness, kMaxBrightness);
+	
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Sawtooth Wave
+//--------------------------------------------------------------------------------
+void anim_SawtoothWave(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	uint32_t brightness; 
+	
+	brightness = CalcRamp(time, kAnimationPeriod, kMinBrightness, kMaxBrightness);
+	
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Sine Wave
+//--------------------------------------------------------------------------------
+void anim_SineWave(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	// First, calculate the brightness as a ramp
+	uint32_t brightness = CalcRamp(time, kAnimationPeriod, kMinBrightness, kMaxBrightness);
+	
+	// Then convert the ramp value to a sine value.
+	brightness = sine8t(brightness);
+	
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Triangle Pulse
+//	Short triangle pulse once during the period
+//--------------------------------------------------------------------------------
+void anim_TrianglePulse(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	uint32_t brightness; 
+	time = (time % kAnimationPeriod);
+	
+	if (time <= kAnimationPeriod2)
+		brightness = CalcTriangleWave(time, kAnimationPeriod2, kMinBrightness, kMaxBrightness);
 	else
-		brightness= ((period-1-ms) * deltaBrightness)/(period/2 - 1) + kMinBrightness;
-	
+		brightness = 0;
+		
 	single->setBrightness(brightness);
 }
 
 //--------------------------------------------------------------------------------
-//	Animation: Ramp Fade
+//	Animation: Triangle Wave Blink
+//	Blinking, where the brightness following a triangle wave 
 //--------------------------------------------------------------------------------
-void rampFade(SinglePixel* single, uint32_t deltaTime)
+void anim_TriangleWaveBlink(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
-	uint32_t ms = (deltaTime % period);
+	uint32_t ms = (time % kAnimationPeriod);
+	uint32_t m2 = (ms % kAnimationPeriod2);
 	
 	uint32_t brightness; 
 	
-	brightness= (ms * deltaBrightness)/(period - 1) + kMinBrightness;
+	brightness = CalcTriangleWave(ms, kAnimationPeriod, kMinBrightness, kMaxBrightness);
+		
+	if (m2 < kAnimationPeriod2/2)
+		brightness = 0;
+	
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Pulse Train
+//--------------------------------------------------------------------------------
+void anim_PulseTrain(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	uint32_t ms = (time % kAnimationPeriod);
+	uint32_t m2 = (ms % kAnimationPeriod2);
+	uint32_t i  = ms/kAnimationPeriod2; // Subperiod number
+	
+	uint32_t brightness;
+
+	// Init: Random number to represent eight random pulses
+	if (time == 0)
+		context->a = random(255);
+
+	// If the bit is set, then triangle wave
+	if ( (context->a & (1 << i)) )
+		brightness = CalcTriangleWave(m2, kAnimationPeriod2, kMinBrightness, kMaxBrightness);
+	// Otherwise, no output
+	else
+		brightness = 0;
+
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Random Level
+//	Change to a random level on a fixed period
+//--------------------------------------------------------------------------------
+void anim_RandomLevel(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	// Constant settings
+	#define kRandomLevelPeriod 1000
+	#define kRandomLevelCount  0x11
+	
+
+	// The first time we are called and at the end of the period
+	// find a new random level
+	if (time == 0 || time > context->endTime)
+	{
+		uint32_t b; 
+
+		context->endTime = time + kRandomLevelPeriod;
+
+		// Find a new level that is different from the current level.
+		// To insure that there is a noticeable difference in brightness we use
+		// levels or steps. Each level is (0xff/kRandomLevelCount) away from
+		// the next level 
+		do {
+			b = (0xff/kRandomLevelCount) * random(0, kRandomLevelCount);
+		} while (b == context->brightness);
+		
+		context->brightness = b;
+		single->setBrightness(b);
+	}
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Random Fade
+//	Fade from one random level to another over a random period
+//--------------------------------------------------------------------------------
+void anim_RandomLevelFade(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	// Constant settings
+	#define kRandomLevelMinPeriod	750
+	#define kRandomLevelMaxPeriod	2000
+
+	// The first time we are called and at the end of the period,
+	// randomly pick a new period duration and end level
+	if (time == 0 || time > context->endTime)
+	{
+		context->endTime = time + random(kRandomLevelMinPeriod, kRandomLevelMaxPeriod);
+		context->startTime = time;
+		context->startLevel = context->endLevel;
+		context->endLevel = random(kMinBrightness, kMaxBrightness);
+	}
+
+	// Calculate the brightness as a value between the start and end levels
+	// based on how far along we are in the period
+	uint32_t ms = (time - context->startTime);
+	uint32_t deltaT = context->endTime - context->startTime;
+	uint32_t brightness = CalcRamp(ms, deltaT, context->startLevel, context->endLevel);
+
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Random Walk Fade
+//	At a fixed interval, randomly increase or decrease the brightness by a fixed 
+//	amount. The idea is to give the impression of a meandering walk.
+//--------------------------------------------------------------------------------
+void anim_RandomWalkFade(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	// Constant settings
+	#define kRandomWalkPeriod 250
+	#define kRandomWalkStep 12
+
+	// At the first call or the end of the period, update the end level
+	if (time == 0 || time > context->endTime)
+	{
+		context->endTime = time + kRandomWalkPeriod;
+		context->startTime = time;
+		context->startLevel = context->endLevel;
+
+		int8_t d = random(2);
+
+		// If we are close to the max brightness, then decrease the brightness 
+		if (context->endLevel >= kMaxBrightness - kRandomWalkStep)
+			context->endLevel -= kRandomWalkStep;
+		// Otherwise, if we are close to the min brightness, then increase the brightness
+		else if (context->endLevel <= kMinBrightness + kRandomWalkStep)
+			context->endLevel += kRandomWalkStep;
+		// Otherwise, randomly increase or decrease the brightness
+		else if (d == 0)
+			context->endLevel -= kRandomWalkStep;
+		else
+			context->endLevel += kRandomWalkStep;
+	}
+
+	// Calculate the brightness as a value between the start and end levels
+	// based on how far along we are in the period
+	uint32_t ms = (time - context->startTime);
+	uint32_t brightness = CalcRamp(ms, kRandomWalkPeriod, context->startLevel, context->endLevel);
+
+	single->setBrightness(brightness);
+}
+
+//--------------------------------------------------------------------------------
+//	Animation: Triangle Fade Fade
+//	Two triangle waves added together. The second wave period is much short than
+//	the first.
+//--------------------------------------------------------------------------------
+void anim_SummedTriangleWaves(SinglePixel* single, uint32_t time, animationContext_t* context)
+{
+	#define kBrightAdjust 50
+
+	uint32_t ms = (time % kAnimationPeriod);
+	uint32_t m2 = (ms % kAnimationPeriod2);
+	uint32_t brightness; 
+
+	brightness = CalcTriangleWave(ms, kAnimationPeriod, kMinBrightness, (kMaxBrightness - kBrightAdjust));
+	brightness += = CalcTriangleWave(m2, kAnimationPeriod2, 0, kBrightAdjust);
+	
+ 	brightness += adj;
 	
 	single->setBrightness(brightness);
 }
@@ -128,33 +307,22 @@ void rampFade(SinglePixel* single, uint32_t deltaTime)
 //--------------------------------------------------------------------------------
 //	Animation: Sine Fade
 //--------------------------------------------------------------------------------
-void sineFade(SinglePixel* single, uint32_t deltaTime)
-{
-	uint32_t ms = (deltaTime % period);
-	
-	uint32_t brightness = (ms * deltaBrightness)/(period - 1) + kMinBrightness;
-	
-	single->setBrightness(sine8t(brightness));
-}
-
-//--------------------------------------------------------------------------------
-//	Animation: Sine Fade
-//--------------------------------------------------------------------------------
-void sineFadeModulated(SinglePixel* single, uint32_t time)
+// NEEDS WORK
+void anim_ModulatedSineWave(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	#define kFadeModulatedBaseline	128
 	#define kFadeModulatedRangeA	 120
 	//#define kFadeModulatedRangeB	 20
 
-	uint32_t ms = (time % period);
+	uint32_t ms = (time % kAnimationPeriod);
 
 	// Calc modulation. Range is 0 to 255
 	#define kFadeModulationMin 0
-	uint32_t modulation = (ms * (255-kFadeModulationMin))/(period - 1) + kFadeModulationMin;
+	uint32_t modulation = (ms * (255-kFadeModulationMin))/(kAnimationPeriod - 1) + kFadeModulationMin;
 	//modulation = sine8t(modulation);
 
-	uint32_t m2 = (ms % period2);
-	uint32_t b = (m2 * 255)/(period2 - 1);
+	uint32_t m2 = (ms % kAnimationPeriod2);
+	uint32_t b = (m2 * 255)/(kAnimationPeriod2 - 1);
 	b = (sine8t(b)*kFadeModulatedRangeA)/(255);
 	//b = (b * modulation)/255;
 
@@ -164,259 +332,52 @@ void sineFadeModulated(SinglePixel* single, uint32_t time)
 }
 
 //--------------------------------------------------------------------------------
-//	Animation: Triangle Blink Fade
-//--------------------------------------------------------------------------------
-void triangleBlinkFade(SinglePixel* single, uint32_t deltaTime)
-{
-	uint32_t ms = (deltaTime % period);
-	uint32_t m2 = (ms % period2);
-	
-	uint32_t brightness; 
-	
-	if (ms < period/2)
-		brightness= (ms * deltaBrightness)/(period/2 - 1) + kMinBrightness;
-	else
-		brightness= ((period-1-ms) * deltaBrightness)/(period/2 - 1) + kMinBrightness;
-		
-	if (m2 < period2/2)
-		brightness = 0;
-	
-	single->setBrightness(brightness);
-}
-
-//--------------------------------------------------------------------------------
-//	Animation: Triangle Fade Fade
-//--------------------------------------------------------------------------------
-void triangleFadeFade(SinglePixel* single, uint32_t deltaTime)
-{
-	uint32_t ms = (deltaTime % period);
-	uint32_t m2 = (ms % period2);
-	
-	#define BrightAdjust 50
-	
-	#define minBr (kMinBrightness)
-	#define maxBr (kMaxBrightness - BrightAdjust)
-	#define delBr (maxBr - minBr)
-	
-	uint32_t brightness; 
-	
-	uint32_t adj;
-	if (m2 < period2/2)
-		adj= (m2 * BrightAdjust)/(period2/2 - 1);
-	else
-		adj= ((period2-1-m2) * BrightAdjust)/(period2/2 - 1);
-	
-	
-	
-	if (ms < period/2)
-		brightness= (ms * delBr)/(period/2 - 1) + minBr;
-	else
-		brightness= ((period-1-ms) * delBr)/(period/2 - 1) + minBr;
-	
- 	brightness += adj;
-	
-	single->setBrightness(brightness);
-}
-
-//--------------------------------------------------------------------------------
-//	Animation: Pulse Fade
-//--------------------------------------------------------------------------------
-void pulseFade(SinglePixel* single, uint32_t deltaTime)
-{
-	uint32_t ms = (deltaTime % period);
-	uint32_t m2 = (ms % period2);
-	
-	uint32_t brightness; 
-	
-	if (ms < period2/2)
-		brightness= (m2 * deltaBrightness)/(period2/2 - 1) + kMinBrightness;
-	else if (ms < period2)
-		brightness= ((period2-1-m2) * deltaBrightness)/(period2/2 - 1) + kMinBrightness;
-	else
-		brightness = 0;
-		
-	single->setBrightness(brightness);
-}
-
-//--------------------------------------------------------------------------------
-//	Animation: Pulse Train Fade
-//--------------------------------------------------------------------------------
-void pulseTrainFade(SinglePixel* single, uint32_t deltaTime)
-{
-	uint32_t ms = (deltaTime % period);
-	uint32_t m2 = (ms % period2);
-	uint32_t i  = ms/period2; // Subperiod number
-	
-	uint32_t brightness;
-	
-	static uint16_t sPulseTrain = 0;
-
-	// Init: Random number to represent eight random pulses
-	if (deltaTime == 0)
-		sPulseTrain = random(255);
-
-	// If the bit is not set, then no pulse
-	if ( (sPulseTrain & (1 << i)) )
-		brightness = 0;
-	// Otherwise, ramp up for the first half of the period
-	else if (m2 < period2/2)
-		brightness= (m2 * deltaBrightness)/(period2/2 - 1) + kMinBrightness;
-	// And ramp down for the second half.
-	else
-		brightness= ((period2-1-m2) * deltaBrightness)/(period2/2 - 1) + kMinBrightness;
-
-	single->setBrightness(brightness);
-}
-
-//--------------------------------------------------------------------------------
-//	Animation: Random Level Fade
-//--------------------------------------------------------------------------------
-void randomLevelFade(SinglePixel* single, uint32_t deltaTime)
-{
-	static uint8_t startLevel = 0;
-	static uint8_t endLevel = 0;
-
-	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
-	{
-		gEndTime = deltaTime + random(750, 2000);
-		gStartTime = deltaTime;
-		startLevel = endLevel;
-		endLevel = random(kMinBrightness, kMaxBrightness);
-	}
-
-	uint32_t ms = (deltaTime - gStartTime);
-	uint32_t deltaT = gEndTime - gStartTime;
-	uint32_t brightness = CalcRamp(ms, deltaT, startLevel, endLevel);
-
-	single->setBrightness(brightness);
-}
-
-//--------------------------------------------------------------------------------
-//	Animation: Random Walk Fade
-//--------------------------------------------------------------------------------
-void randomWalkFade(SinglePixel* single, uint32_t deltaTime)
-{
-	#define kRandomWalkPeriod 250
-	#define kRandomWalkRandomness 31 /* -4 to +4 */
-	#define kRandomWalkStep 12
-
-	static uint8_t startLevel = 0;
-	static uint8_t endLevel = 0;
-
-	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
-	{
-		gEndTime = deltaTime + kRandomWalkPeriod;
-		gStartTime = deltaTime;
-		startLevel = endLevel;
-
-// 		int8_t d = random(kRandomWalkRandomness);
-//
-// 		if (endLevel < kMinBrightness + kRandomWalkRandomness)
-// 			endLevel += d;
-// 		else if (endLevel > kMaxBrightness - kRandomWalkRandomness)
-// 			endLevel -= d;
-// 		else
-// 			endLevel += d - kRandomWalkRandomness/2;
-
-// 		int8_t d = random(3) - 1;
-//
-// 		if (d < 0 && endLevel >= kMinBrightness + kRandomWalkStep)
-// 			endLevel -= kRandomWalkStep;
-// 		else if (d > 0 &&endLevel > kMaxBrightness - kRandomWalkStep )
-// 			endLevel += kRandomWalkStep;
-
-		int8_t d = random(2);
-
-		// Decrement 
-		if (endLevel >= kMaxBrightness - kRandomWalkStep)
-			endLevel -= kRandomWalkStep;
-		else if (endLevel <= kMinBrightness + kRandomWalkStep)
-			endLevel += kRandomWalkStep;
-		else if (d == 0)
-			endLevel -= kRandomWalkStep;
-		else
-			endLevel += kRandomWalkStep;
-	}
-
-	uint32_t ms = (deltaTime - gStartTime);
-	uint32_t brightness = CalcRamp(ms, kRandomWalkPeriod, startLevel, endLevel);
-
-	single->setBrightness(brightness);
-}
-
-
-//--------------------------------------------------------------------------------
-//	Animation: Random Level
-//--------------------------------------------------------------------------------
-void randomLevel(SinglePixel* single, uint32_t deltaTime)
-{
-	static uint32_t brightness = 0;
-	#define kRandomLevelPeriod 1000
-	
-	uint32_t b; 
-
-	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
-	{
-		gEndTime = deltaTime + kRandomLevelPeriod;
-
-		do {
-			b = 0x0f * random(0, 0x11);
-		} while (b == brightness);
-		
-		brightness = b;
-		single->setBrightness(brightness);
-	}
-}
-
-
-//--------------------------------------------------------------------------------
 //	Animation: Bounce
 //--------------------------------------------------------------------------------
-void bounce(SinglePixel* single, uint32_t deltaTime)
+// NEEDS WORK
+void anim_Bounce(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	#define kBounceInitialMaxBrightness kMaxBrightness
 	#define kBounceBrightnessDecrement (16)
 	#define kBounceMinBrightness (96)
 	#define kBounceMinWidth 20
-	#define kBounceInitialWidth (period/4)
+	#define kBounceInitialWidth (kAnimationPeriod/4)
 	#define kBounceDecayNum (3)
 	#define kBounceDecayDen (4)
 	
-	
-	static uint16_t sMaxBrightness = kBounceInitialMaxBrightness;
-	static uint16_t sBounceWidth = kBounceInitialWidth;
+	// sMaxBrightness: context->a
+	// sBounceWidth: context->b
 	
 	uint32_t brightness;
 	
 	// Init: Reset max brightness and bounce width
-	if (deltaTime == 0 || sBounceWidth == 0)
+	if (time == 0 || context->b == 0)
 	{
-		gStartTime = deltaTime;
-		gEndTime = gStartTime + sBounceWidth;
-		sMaxBrightness = kBounceInitialMaxBrightness;
-		sBounceWidth = kBounceInitialWidth;
+		context->startTime = time;
+		context->endTime = context->startTime + context->b;
+		context->a = kBounceInitialMaxBrightness;
+		context->b = kBounceInitialWidth;
 	}
-	else if (deltaTime > gEndTime)
+	else if (time > context->endTime)
 	{
-		sBounceWidth =  (sBounceWidth * kBounceDecayNum) / kBounceDecayDen;
-		//sMaxBrightness = (sMaxBrightness * kBounceDecayNum) / kBounceDecayDen;
-		if (sMaxBrightness > kBounceMinBrightness + kBounceBrightnessDecrement)
-			sMaxBrightness -= kBounceBrightnessDecrement;
+		context->b =  (context->b * kBounceDecayNum) / kBounceDecayDen;
+		//context->a = (context->a * kBounceDecayNum) / kBounceDecayDen;
+		if (context->a > kBounceMinBrightness + kBounceBrightnessDecrement)
+			context->a -= kBounceBrightnessDecrement;
 
-
-		gStartTime = deltaTime;
-		gEndTime = gStartTime + sBounceWidth;
+		context->startTime = time;
+		context->endTime = context->startTime + context->b;
 	}
 	
-	if (sBounceWidth < kBounceMinWidth)
+	if (context->b < kBounceMinWidth)
 	{
 		brightness = 0;
 	}
 	else
 	{
-		deltaTime -= gStartTime;
+		time -= context->startTime;
 
-		brightness = (deltaTime * sMaxBrightness)/(sBounceWidth - 1);
+		brightness = (time * context->a)/(context->b - 1);
 	}
 	
 	single->setBrightness(sine8t(brightness));
@@ -425,7 +386,8 @@ void bounce(SinglePixel* single, uint32_t deltaTime)
 //--------------------------------------------------------------------------------
 //	Animation: Candle Flicker
 //--------------------------------------------------------------------------------
-void candleFlicker(SinglePixel* single, uint32_t deltaTime)
+// NEEDS WORK
+void anim_CandleFlicker(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	#define kFlickerMinPeriod 50
 	#define kFlickerMaxPeriod 150
@@ -437,43 +399,41 @@ void candleFlicker(SinglePixel* single, uint32_t deltaTime)
 	#define kFlickerHighBrightnessMin		(kMaxBrightness - 50)
 	#define kFlickerHighBrightnessMax		(kMaxBrightness)
 
-	static uint8_t startLevel = 0;
-	static uint8_t endLevel = 0;
-	static uint8_t levelCount = kFlickerPeriods;
-	static uint8_t candleBrightRange = 1; // mid
+	// levelCount: context->a = kFlickerPeriods;
+	// candleBrightRange: context->b = 1; // mid
 
-	if (deltaTime == 0 || gEndTime == 0 || deltaTime > gEndTime)
+	if (time == 0 || time > context->endTime)
 	{
-		if (levelCount == 0)
+		if (context->a == 0)
 		{
 			uint8_t r = random(20);
 			if (r < 1)
-				candleBrightRange = 0; // low
+				context->b = 0; // low
 			else if (r < 2)
-				candleBrightRange = 2; // high
+				context->b = 2; // high
 			else
-				candleBrightRange = 1; // high
+				context->b = 1; // high
 
-			levelCount = kFlickerPeriods;
+			context->a = kFlickerPeriods;
 		}
 
-		gEndTime = deltaTime + random(kFlickerMinPeriod, kFlickerMaxPeriod);
-		gStartTime = deltaTime;
-		startLevel = endLevel;
-		levelCount -= 1;
+		context->endTime = time + random(kFlickerMinPeriod, kFlickerMaxPeriod);
+		context->startTime = time;
+		context->startLevel = context->endLevel;
+		context->a -= 1;
 
 		// Select a new level based on the "brightness range"
-		if (candleBrightRange == 0)
-			endLevel = random(kFlickerLowBrightnessMin, kFlickerLowBrightnessMax);
-		else if (candleBrightRange == 1)
-			endLevel = random(kFlickerMidBrightnessMin, kFlickerMidBrightnessMax);
+		if (context->b == 0)
+			context->endLevel = random(kFlickerLowBrightnessMin, kFlickerLowBrightnessMax);
+		else if (context->b == 1)
+			context->endLevel = random(kFlickerMidBrightnessMin, kFlickerMidBrightnessMax);
 		else
-			endLevel = random(kFlickerHighBrightnessMin, kFlickerHighBrightnessMax);
+			context->endLevel = random(kFlickerHighBrightnessMin, kFlickerHighBrightnessMax);
 	}
 
-	uint32_t ms = deltaTime - gStartTime;
-	uint32_t deltaT = gEndTime - gStartTime;
-	uint32_t brightness = CalcRamp(ms, deltaT, startLevel, endLevel);
+	uint32_t ms = time - context->startTime;
+	uint32_t deltaT = context->endTime - context->startTime;
+	uint32_t brightness = CalcRamp(ms, deltaT, context->startLevel, context->endLevel);
 
 	single->setBrightness(brightness);
 }
@@ -483,38 +443,28 @@ void candleFlicker(SinglePixel* single, uint32_t deltaTime)
 //
 //	https://www.e-breathing.com/normal-respiratory-rate-volume-chart/
 //--------------------------------------------------------------------------------
-void breath(SinglePixel* single, uint32_t deltaTime)
+void anim_Breath(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	#define kBreathPeriod (kAnimationPeriod/2)
 	#define kBreathOffset (kAnimationPeriod/4)
 
-	uint32_t ms = (deltaTime % kAnimationPeriod);
-	uint32_t brightness; 
+	uint32_t brightness = 0; 
+	
+	time = (time % kAnimationPeriod);
 
-	if (ms < kBreathOffset)
+	if (time >= kBreathOffset && time <= kBreathOffset + kBreathPeriod)
 	{
-		brightness = 0;
-	}
-	else
-	{
-		ms -= kBreathOffset;
-
-		if (ms > kBreathPeriod)
-			brightness = 0;
-		else if (ms < kBreathPeriod/2)
-			brightness= (ms * deltaBrightness)/(kBreathPeriod/2 - 1) + kMinBrightness;
-		else
-			brightness= ((kBreathPeriod-1-ms) * deltaBrightness)/(kBreathPeriod/2 - 1) + kMinBrightness;
+		time -= kBreathOffset;
+		brightness = CalcTriangleWave(time, kBreathPeriod, kMinBrightness, kMaxBrightness);
 	}
 
 	single->setBrightness(brightness);
 }
 
-
 //--------------------------------------------------------------------------------
 //	Animation: Heartbeat
 //--------------------------------------------------------------------------------
-void heartbeat(SinglePixel* single, uint32_t deltaTime)
+void anim_Heartbeat(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	#define kHeartbeatPeriod 1000
 	#define kHeartbeatOffset 250
@@ -522,23 +472,17 @@ void heartbeat(SinglePixel* single, uint32_t deltaTime)
 	#define kHeartbeatBrightnessA (kMaxBrightness - 50)
 	#define kHeartbeatBrightnessB (kMaxBrightness - 150)
 
-	uint16_t ms = (deltaTime % kHeartbeatPeriod);
 	uint16_t brightness = 0;
+	time = (time % kHeartbeatPeriod);
 
-	if (ms < kHeartbeatOffset)
+	if (time >= kHeartbeatOffset)
 	{
-		brightness = 0;
-	}
-	else
-	{
-		ms -= kHeartbeatOffset;
+		time -= kHeartbeatOffset;
 
-		if (ms < kHeartbeatWidth)
-			brightness = CalcTriangleWave(ms, kHeartbeatWidth, kMinBrightness, kHeartbeatBrightnessA);
-		else if (ms < 2*kHeartbeatWidth)
-			brightness = CalcTriangleWave(ms, kHeartbeatWidth, kMinBrightness, kHeartbeatBrightnessB);
-		else
-			brightness = 0;
+		if (time < kHeartbeatWidth)
+			brightness = CalcTriangleWave(time, kHeartbeatWidth, kMinBrightness, kHeartbeatBrightnessA);
+		else if (time < 2*kHeartbeatWidth)
+			brightness = CalcTriangleWave(time, kHeartbeatWidth, kMinBrightness, kHeartbeatBrightnessB);
 	}
 
 	single->setBrightness(brightness);
@@ -547,7 +491,8 @@ void heartbeat(SinglePixel* single, uint32_t deltaTime)
 //--------------------------------------------------------------------------------
 //	Animation: Ocean Wave
 //--------------------------------------------------------------------------------
-void oceanWave(SinglePixel* single, uint32_t time)
+// NEEDS WORK
+void anim_OceanWave(SinglePixel* single, uint32_t time, animationContext_t* context)
 {
 	#define kOceanWaveMinPeriod		1500
 	#define kOceanWaveMaxPeriod		3500
@@ -555,26 +500,26 @@ void oceanWave(SinglePixel* single, uint32_t time)
 	#define kOceanWaveMaxPeriodBrightness	(kMaxBrightness - 50)
 	#define kOceanWaveMinBrightness	20
 
-	static uint16_t sWavePeriod = kOceanWaveMinPeriod;
-	static uint8_t sMaxBrightness = kMaxBrightness;
+	// sWavePeriod: context->a
+	// sMaxBrightness: context->b
 	uint32_t brightness;
 
 	// Init: Reset max brightness and bounce width
-	if (time == 0 || time > gEndTime)
+	if (time == 0 || time > context->endTime)
 	{
-		sWavePeriod = random(kOceanWaveMinPeriod, kOceanWaveMaxPeriod);
+		context->a = random(kOceanWaveMinPeriod, kOceanWaveMaxPeriod);
 
-		uint32_t a = sWavePeriod - kOceanWaveMinPeriod;
-		sMaxBrightness = kOceanWaveMinPeriodBrightness +
+		uint32_t a = context->a - kOceanWaveMinPeriod;
+		context->b = kOceanWaveMinPeriodBrightness +
 					((kOceanWaveMaxPeriodBrightness - kOceanWaveMinPeriodBrightness) * a) /
 					(kOceanWaveMaxPeriod - kOceanWaveMinPeriod);
 
-		gStartTime = time;
-		gEndTime = gStartTime + sWavePeriod;
+		context->startTime = time;
+		context->endTime = context->startTime + context->a;
 	}
 
-	time -= gStartTime;
+	time -= context->startTime;
 
-	brightness = CalcTriangleWave(time, sWavePeriod, kOceanWaveMinBrightness, sMaxBrightness);
+	brightness = CalcTriangleWave(time, context->a, kOceanWaveMinBrightness, context->b);
 	single->setBrightness((brightness));
 }
