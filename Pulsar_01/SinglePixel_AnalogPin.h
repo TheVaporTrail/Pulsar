@@ -10,7 +10,6 @@
 class SinglePixel_AnalogPin : public SinglePixel {
 
 	public:
-
 		// Constructor
 		SinglePixel_AnalogPin(uint8_t pin);
 		

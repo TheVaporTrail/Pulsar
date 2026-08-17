@@ -23,16 +23,18 @@
 //	Animation Prototypes
 //--------------------------------------------------------------------------------
 void anim_PixelOff(SinglePixel* single, uint32_t time, animationContext_t* context);
+
 void anim_SawtoothWave(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_TriangleWave(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_SineWave(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_TrianglePulse(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_TriangleWaveBlink(SinglePixel* single, uint32_t time, animationContext_t* context);
+void anim_SummedTriangleWaves(SinglePixel* single, uint32_t time, animationContext_t* context);
+
 void anim_PulseTrain(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_RandomLevel(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_RandomLevelFade(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_RandomWalkFade(SinglePixel* single, uint32_t time, animationContext_t* context);
-void anim_SummedTriangleWaves(SinglePixel* single, uint32_t time, animationContext_t* context);
 
 void anim_Breath(SinglePixel* single, uint32_t time, animationContext_t* context);
 void anim_Heartbeat(SinglePixel* single, uint32_t time, animationContext_t* context);
@@ -297,9 +299,9 @@ void anim_SummedTriangleWaves(SinglePixel* single, uint32_t time, animationConte
 	uint32_t brightness; 
 
 	brightness = CalcTriangleWave(ms, kAnimationPeriod, kMinBrightness, (kMaxBrightness - kBrightAdjust));
-	brightness += = CalcTriangleWave(m2, kAnimationPeriod2, 0, kBrightAdjust);
+	brightness += CalcTriangleWave(m2, kAnimationPeriod2, 0, kBrightAdjust);
 	
- 	brightness += adj;
+ 	//brightness += adj;
 	
 	single->setBrightness(brightness);
 }

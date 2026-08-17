@@ -10,8 +10,10 @@
 //--------------------------------------------------------------------------------
 //	Hardware Selection
 //--------------------------------------------------------------------------------
-// Uncomment the line according to how the light source is connected to the Arduino
+// Uncomment if using an LED on a PWM pin
 #define HW_USE_ANALOG_OUTPUT 1
+
+// Uncomment if using a Neopixel
 //#define HW_USE_NEOPIXEL 1
 
 //--------------------------------------------------------------------------------
@@ -19,7 +21,7 @@
 //--------------------------------------------------------------------------------
 #ifdef HW_USE_ANALOG_OUTPUT
 	#include "SinglePixel_AnalogPin.h"
-	#define HW_ANALOG_LED_PIN 11
+	#define HW_ANALOG_LED_PIN 3
 #endif
 
 #ifdef HW_USE_NEOPIXEL
@@ -45,7 +47,9 @@ SinglePixel* single = NULL;
 //--------------------------------------------------------------------------------
 //	Animation Globals
 //--------------------------------------------------------------------------------
-// Time, in ms, when the current animation started
+// Time, in ms.
+// In this app we are resetting this at the beginning of each animation, but 
+// that is not required.
 uint32_t gStartTime;
 
 // Animation function list
@@ -55,6 +59,8 @@ uint16_t gAnimationIdx = 0;
 // Current animation function
 animationFunc_t gCurrentAnimation = NULL;
 
+// Context (ie, data) for the current animation.
+// We need a context for each animation if running multiple animations simultaneously
 animationContext_t gAnimationContext;
 
 //--------------------------------------------------------------------------------
@@ -71,8 +77,10 @@ void setup()
 {
 	gStartTime = millis();
 	
+	// Load the list of animations, point to the first one, and reset the context
 	initAnimationList();
 	
+	// Create the SinglePixel object that will handle updating the LED
 	#ifdef HW_USE_ANALOG_OUTPUT
 	single = new SinglePixel_AnalogPin(HW_ANALOG_LED_PIN);
 	#endif
@@ -90,6 +98,7 @@ void setup()
 void loop()
 {
 	runAnimation();
+	delay(kDelayInterval);
 }
 
 //--------------------------------------------------------------------------------
@@ -132,7 +141,5 @@ void runAnimation(void)
 	}
 
 	gCurrentAnimation(single, deltaTime, &gAnimationContext);
-	
-	delay(kDelayInterval);
 }
 
